@@ -10,15 +10,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OpenInvHook extends PluginHook {
 
     private boolean errorLogged = false;
 
-    private final Set<UUID> alreadyHiddenBeforeVanishing = new HashSet<>();
+    private final Set<UUID> alreadyHiddenBeforeVanishing = ConcurrentHashMap.newKeySet();
 
     public OpenInvHook(SuperVanish superVanish) {
         super(superVanish);

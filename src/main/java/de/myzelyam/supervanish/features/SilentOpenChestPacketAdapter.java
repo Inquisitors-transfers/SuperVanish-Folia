@@ -15,7 +15,6 @@ import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.google.common.collect.ImmutableList;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -54,9 +53,8 @@ public class SilentOpenChestPacketAdapter extends PacketAdapter {
                             .isHidden(infoData.getProfile().getUUID(), receiver)
                             && silentOpenChest.plugin.getVanishStateMgr()
                             .isVanished(infoData.getProfile().getUUID())) {
-                        Player vanishedTabPlayer = Bukkit.getPlayer(infoData.getProfile().getUUID());
                         if (infoData.getGameMode() == EnumWrappers.NativeGameMode.SPECTATOR
-                                && silentOpenChest.hasSilentlyOpenedChest(vanishedTabPlayer)
+                                && silentOpenChest.hasSilentlyOpenedChest(infoData.getProfile().getUUID())
                                 && event.getPacket().getPlayerInfoAction().read(0)
                                 == EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE) {
                             int latency;

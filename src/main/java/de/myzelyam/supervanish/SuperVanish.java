@@ -17,6 +17,7 @@ import de.myzelyam.supervanish.features.FeatureMgr;
 import de.myzelyam.supervanish.hooks.PluginHookMgr;
 import de.myzelyam.supervanish.net.UpdateNotifier;
 import de.myzelyam.supervanish.utils.ExceptionLogger;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import de.myzelyam.supervanish.utils.VersionUtil;
 import de.myzelyam.supervanish.visibility.ActionBarMgr;
 import de.myzelyam.supervanish.visibility.FileVanishStateMgr;
@@ -37,9 +38,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
@@ -67,7 +69,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     private LoginListener loginListener;
     private LayeredPermissionChecker layeredPermissionChecker;
     private PluginHookMgr pluginHookMgr;
-    private Set<VanishPlayer> vanishPlayers = new HashSet<>();
+    private final Map<UUID, VanishPlayer> vanishPlayers = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -94,7 +96,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             pluginHookMgr = new PluginHookMgr(this);
             featureMgr = new FeatureMgr(this);
             featureMgr.enableFeatures();
-            if (!Bukkit.getOnlinePlayers().isEmpty())
+            if (!FoliaUtil.onlinePlayersSnapshot().isEmpty())
                 onReload();
         } catch (Exception e) {
             logException(e);
@@ -121,21 +123,26 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     }
 
     private void onReload() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : FoliaUtil.onlinePlayersSnapshot()) {
+            FoliaUtil.runAtEntity(this, player, () -> {
             boolean itemPickUps = getPlayerData().getBoolean(
                     "PlayerData." + player.getUniqueId() + ".itemPickUps",
                     getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
             boolean vanished = vanishStateMgr.isVanished(player.getUniqueId());
             createVanishPlayer(player, itemPickUps);
             if (vanished) {
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers())
-                    if (!hasPermissionToSee(onlinePlayer, player))
+                UUID playerUuid = player.getUniqueId();
+                int playerUsePermissionLevel = getVanishPlayer(player).getUsePermissionLevel();
+                FoliaUtil.forEachOnlinePlayer(this, onlinePlayer -> {
+                    if (!hasPermissionToSee(onlinePlayer, playerUuid, playerUsePermissionLevel))
                         visibilityChanger.getHider().setHidden(player, onlinePlayer, true);
+                });
             }
             if (getSettings().getBoolean("MessageOptions.DisplayActionBar")
                     && vanished && actionBarMgr != null) {
                 actionBarMgr.addActionBar(player);
             }
+            });
         }
     }
 
@@ -202,30 +209,31 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
     }
 
     public VanishPlayer getVanishPlayer(Player player) {
-        for (VanishPlayer vanishPlayer : vanishPlayers) {
-            if (vanishPlayer.getPlayerUUID().equals(player.getUniqueId())) {
-                return vanishPlayer;
-            }
-        }
+        VanishPlayer cached = vanishPlayers.get(player.getUniqueId());
+        if (cached != null) return cached;
         // ensure that there is always a vanish player
         boolean itemPickUps = getPlayerData().getBoolean(
                 "PlayerData." + player.getUniqueId() + ".itemPickUps",
                 getSettings().getBoolean("InvisibilityFeatures.DefaultPickUpItemsOption"));
         final VanishPlayer vanishPlayer = new VanishPlayer(player, this, itemPickUps);
-        vanishPlayers.add(vanishPlayer);
-        return vanishPlayer;
+        VanishPlayer previous = vanishPlayers.putIfAbsent(player.getUniqueId(), vanishPlayer);
+        return previous == null ? vanishPlayer : previous;
     }
 
     public void createVanishPlayer(Player player, boolean itemPickUps) {
         VanishPlayer vanishPlayer = new VanishPlayer(player, this, itemPickUps);
-        vanishPlayers.add(vanishPlayer);
+        vanishPlayers.put(player.getUniqueId(), vanishPlayer);
     }
 
     public void removeVanishPlayer(VanishPlayer vanishPlayer) {
-        vanishPlayers.remove(vanishPlayer);
+        vanishPlayers.remove(vanishPlayer.getPlayerUUID());
     }
 
     public void sendMessage(CommandSender p, String messagesYmlPath, Object... additionalPlayerInfo) {
+        if (p instanceof Player && !FoliaUtil.isOwnedByCurrentRegion((Player) p)) {
+            FoliaUtil.runAtEntity(this, (Player) p, () -> sendMessage(p, messagesYmlPath, additionalPlayerInfo));
+            return;
+        }
         String message;
         if (!messagesYmlPath.contains(" ") && getMessage(messagesYmlPath) != null)
             message = getMessage(messagesYmlPath);
@@ -246,6 +254,10 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
 
     public boolean hasPermissionToSee(Player viewer, Player viewed) {
         return layeredPermissionChecker.hasPermissionToSee(viewer, viewed);
+    }
+
+    public boolean hasPermissionToSee(Player viewer, UUID viewedUuid, int viewedUsePermissionLevel) {
+        return layeredPermissionChecker.hasPermissionToSee(viewer, viewedUuid, viewedUsePermissionLevel);
     }
 
     public int getLayeredPermissionLevel(CommandSender sender, String permission) {

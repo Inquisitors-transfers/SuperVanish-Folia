@@ -9,8 +9,8 @@
 package de.myzelyam.supervanish.hooks;
 
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
@@ -100,14 +100,14 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                                 .getOnlineVanishedPlayers();
                         String playerListMessage = "";
                         for (UUID uuid : onlineVanishedPlayers) {
-                            Player onlineVanished = Bukkit.getPlayer(uuid);
-                            if (onlineVanished == null) continue;
                             if (p != null && superVanish.getSettings().getBoolean(
                                     "IndicationFeatures.LayeredPermissions.HideInvisibleInCommands", false)
-                                    && !superVanish.hasPermissionToSee(p, onlineVanished)) {
+                                    && superVanish.getVisibilityChanger().getHider().isHidden(uuid, p)) {
                                 continue;
                             }
-                            playerListMessage = playerListMessage + onlineVanished.getName() + ", ";
+                            String name = superVanish.getPlayerData().getString(
+                                    "PlayerData." + uuid + ".information.name", uuid.toString());
+                            playerListMessage = playerListMessage + name + ", ";
                         }
                         return playerListMessage.length() > 3
                                 ? playerListMessage.substring(0, playerListMessage.length() - 2)
@@ -123,12 +123,11 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                 e -> {
                     try {
                         Player p = e.getPlayer();
-                        int playercount = Bukkit.getOnlinePlayers().size();
+                        int playercount = FoliaUtil.onlinePlayersSnapshot().size();
                         for (UUID uuid : superVanish.getVanishStateMgr()
                                 .getOnlineVanishedPlayers()) {
-                            Player onlineVanished = Bukkit.getPlayer(uuid);
-                            if (onlineVanished == null) continue;
-                            if (p == null || !superVanish.canSee(p, onlineVanished))
+                            if (p == null || superVanish.getVisibilityChanger().getHider()
+                                    .isHidden(uuid, p))
                                 playercount--;
                         }
                         return playercount + "";
@@ -136,7 +135,7 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                         if (!(t instanceof NoClassDefFoundError || t instanceof
                                 ConcurrentModificationException))
                             superVanish.logException(t);
-                        return Bukkit.getOnlinePlayers().size() + "";
+                        return FoliaUtil.onlinePlayersSnapshot().size() + "";
                     }
                 });
     }

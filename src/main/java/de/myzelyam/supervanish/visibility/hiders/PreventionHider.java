@@ -9,6 +9,7 @@
 package de.myzelyam.supervanish.visibility.hiders;
 
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import de.myzelyam.supervanish.utils.BukkitPlayerHidingUtil;
 import de.myzelyam.supervanish.visibility.hiders.modules.PlayerInfoModule;
 import de.myzelyam.supervanish.visibility.hiders.modules.TabCompleteModule;
@@ -38,8 +39,11 @@ public class PreventionHider extends PlayerHider implements BooleanSupplier {
     @Override
     public boolean setHidden(Player player, Player viewer, boolean hidden) {
         if (super.setHidden(player, viewer, hidden) || BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
-            if (hidden) BukkitPlayerHidingUtil.hidePlayer(player, viewer, plugin);
-            else BukkitPlayerHidingUtil.showPlayer(player, viewer, plugin);
+            FoliaUtil.runAtEntity(plugin, viewer, () -> {
+                if (!viewer.isOnline()) return;
+                if (hidden) BukkitPlayerHidingUtil.hidePlayer(player, viewer, plugin);
+                else BukkitPlayerHidingUtil.showPlayer(player, viewer, plugin);
+            });
             return true;
         }
         return false;
@@ -57,7 +61,9 @@ public class PreventionHider extends PlayerHider implements BooleanSupplier {
                 return false;
             }
             for (Player viewer : playerHiddenFromPlayersMap.get(hidden)) {
-                BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin);
+                FoliaUtil.runAtEntity(plugin, viewer, () -> {
+                    if (viewer.isOnline()) BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin);
+                });
             }
         }
         return true;

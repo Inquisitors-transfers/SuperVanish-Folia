@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableList;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.api.vanish.PostPlayerHideEvent;
 import de.myzelyam.supervanish.SuperVanish;
-import org.bukkit.Bukkit;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -53,44 +53,53 @@ public class VanishIndication extends Feature {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onVanish(PostPlayerHideEvent e) {
         Player p = e.getPlayer();
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+        PacketContainer packet = createPlayerInfoChangeGameModePacket(p, true);
+        FoliaUtil.forEachOnlinePlayer(plugin, onlinePlayer -> {
             if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer) && p != onlinePlayer) {
-                sendPlayerInfoChangeGameModePacket(onlinePlayer, p, true);
+                sendPacket(onlinePlayer, packet);
             }
-        }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onReappear(PlayerShowEvent e) {
         final Player p = e.getPlayer();
-        for (final Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer) && p != onlinePlayer) {
-                delay(() -> sendPlayerInfoChangeGameModePacket(onlinePlayer, p, false));
-            }
-        }
+        FoliaUtil.runAtEntityLater(plugin, p, () -> {
+            PacketContainer packet = createPlayerInfoChangeGameModePacket(p, false);
+            FoliaUtil.forEachOnlinePlayer(plugin, onlinePlayer -> {
+                if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer) && p != onlinePlayer) {
+                    sendPacket(onlinePlayer, packet);
+                }
+            });
+        }, 1);
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         final Player p = e.getPlayer();
-        delay(() -> {
+        FoliaUtil.runAtEntityLater(plugin, p, () -> {
             // tell others that p is a spectator
-            if (plugin.getVanishStateMgr().isVanished(p.getUniqueId()))
-                for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
+                PacketContainer packet = createPlayerInfoChangeGameModePacket(p, true);
+                FoliaUtil.forEachOnlinePlayer(plugin, onlinePlayer -> {
                     if (!plugin.getVisibilityChanger().getHider().isHidden(p, onlinePlayer)
                             && p != onlinePlayer) {
-                        sendPlayerInfoChangeGameModePacket(onlinePlayer, p, true);
+                        sendPacket(onlinePlayer, packet);
                     }
-                }
+                });
+            }
             // tell p that others are spectators
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            for (Player onlinePlayer : FoliaUtil.onlinePlayersSnapshot()) {
                 if (!plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())) continue;
                 if (!plugin.getVisibilityChanger().getHider().isHidden(onlinePlayer, p)
                         && p != onlinePlayer) {
-                    sendPlayerInfoChangeGameModePacket(p, onlinePlayer, true);
+                    FoliaUtil.runAtEntity(plugin, onlinePlayer, () -> {
+                        PacketContainer packet = createPlayerInfoChangeGameModePacket(onlinePlayer, true);
+                        FoliaUtil.runAtEntity(plugin, p, () -> sendPacket(p, packet));
+                    });
                 }
             }
-        });
+        }, 1);
     }
 
     @Override
@@ -151,7 +160,7 @@ public class VanishIndication extends Feature {
                 });
     }
 
-    private void sendPlayerInfoChangeGameModePacket(Player p, Player change, boolean spectator) {
+    private PacketContainer createPlayerInfoChangeGameModePacket(Player change, boolean spectator) {
         PacketContainer packet = new PacketContainer(PLAYER_INFO);
         packet.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE);
         List<PlayerInfoData> data = new ArrayList<>();
@@ -161,6 +170,10 @@ public class VanishIndication extends Feature {
                         : EnumWrappers.NativeGameMode.fromBukkit(change.getGameMode()),
                 WrappedChatComponent.fromText(change.getPlayerListName())));
         packet.getPlayerInfoDataLists().write(0, data);
+        return packet;
+    }
+
+    private void sendPacket(Player p, PacketContainer packet) {
         ProtocolLibrary.getProtocolManager().sendServerPacket(p, packet);
     }
 }

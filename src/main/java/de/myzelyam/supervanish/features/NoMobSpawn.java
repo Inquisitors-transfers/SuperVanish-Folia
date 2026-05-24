@@ -4,14 +4,13 @@ import com.destroystokyo.paper.event.entity.PlayerNaturallySpawnCreaturesEvent;
 import com.destroystokyo.paper.event.entity.PreSpawnerSpawnEvent;
 import com.destroystokyo.paper.event.entity.SkeletonHorseTrapEvent;
 import de.myzelyam.supervanish.SuperVanish;
-import org.bukkit.Bukkit;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import org.bukkit.GameMode;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 
 import java.util.List;
-import java.util.UUID;
 
 public class NoMobSpawn extends Feature {
 
@@ -62,9 +61,9 @@ public class NoMobSpawn extends Feature {
         try {
             // First check if a non-spectator vanished player is in range
             boolean vanishedPlayerInRange = false;
-            for (UUID vanishedUUID : plugin.getVanishStateMgr().getOnlineVanishedPlayers()) {
-                Player p = Bukkit.getPlayer(vanishedUUID);
-                if (p == null) continue;
+            for (Player p : FoliaUtil.onlinePlayersSnapshot()) {
+                if (!FoliaUtil.isOwnedByCurrentRegion(p)) continue;
+                if (!plugin.getVanishStateMgr().isVanished(p.getUniqueId())) continue;
                 if (p.getWorld().equals(e.getSpawnerLocation().getWorld()) &&
                         p.getLocation().distanceSquared(e.getSpawnerLocation()) <= 256 &&
                         p.getGameMode() != GameMode.SPECTATOR)
@@ -73,7 +72,8 @@ public class NoMobSpawn extends Feature {
             if (!vanishedPlayerInRange) return;
 
             // If so, only cancel if no non-vanished player is in range
-            for (Player p : Bukkit.getOnlinePlayers()) {
+            for (Player p : FoliaUtil.onlinePlayersSnapshot()) {
+                if (!FoliaUtil.isOwnedByCurrentRegion(p)) continue;
                 if (p.getWorld().equals(e.getSpawnerLocation().getWorld()) &&
                         p.getLocation().distanceSquared(e.getSpawnerLocation()) <= 256 &&
                         p.getGameMode() != GameMode.SPECTATOR &&

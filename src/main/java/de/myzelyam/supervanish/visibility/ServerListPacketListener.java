@@ -17,8 +17,8 @@ import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedServerPing;
 
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class ServerListPacketListener extends PacketAdapter {
             WrappedServerPing ping = e.getPacket().getServerPings().read(0);
             Collection<UUID> onlineVanishedPlayers = plugin.getVanishStateMgr().getOnlineVanishedPlayers();
             int vanishedPlayersCount = plugin.getVanishStateMgr().getOnlineVanishedPlayers().size(),
-                    playerCount = Bukkit.getOnlinePlayers().size();
+                    playerCount = FoliaUtil.onlinePlayersSnapshot().size();
             if (settings.getBoolean("ExternalInvisibility.ServerList.AdjustAmountOfOnlinePlayers")) {
                 ping.setPlayersOnline(playerCount - vanishedPlayersCount);
             }

@@ -12,14 +12,12 @@ import com.google.common.collect.ImmutableSet;
 
 import de.myzelyam.supervanish.SuperVanish;
 
-import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -44,10 +42,19 @@ public abstract class PlayerHider implements Listener {
     }
 
     public boolean isHidden(UUID playerUUID, Player viewer) {
-        if (playerUUID.equals(viewer.getUniqueId())) return false;
+        return isHidden(playerUUID, viewer.getUniqueId());
+    }
+
+    public boolean isHidden(UUID playerUUID, UUID viewerUUID) {
+        if (playerUUID.equals(viewerUUID)) return false;
         for (Player p : playerHiddenFromPlayersMap.keySet()) {
             if (p.getUniqueId().equals(playerUUID)) {
-                return playerHiddenFromPlayersMap.get(p).contains(viewer);
+                Set<Player> hiddenFromPlayers = playerHiddenFromPlayersMap.get(p);
+                if (hiddenFromPlayers == null) return false;
+                for (Player viewer : hiddenFromPlayers) {
+                    if (viewer.getUniqueId().equals(viewerUUID)) return true;
+                }
+                return false;
             }
         }
         return false;
@@ -67,10 +74,9 @@ public abstract class PlayerHider implements Listener {
      * @return TRUE if the operation changed the state, FALSE if it did not
      */
     public boolean setHidden(Player player, Player viewer, boolean hidden) {
-        if (!playerHiddenFromPlayersMap.containsKey(player))
-            playerHiddenFromPlayersMap.put(player, new HashSet<>());
         if (viewer == player) return false;
-        Set<Player> hiddenFromPlayers = playerHiddenFromPlayersMap.get(player);
+        Set<Player> hiddenFromPlayers = playerHiddenFromPlayersMap.computeIfAbsent(player,
+                ignored -> ConcurrentHashMap.newKeySet());
         if (hidden && !hiddenFromPlayers.contains(viewer)) {
             hiddenFromPlayers.add(viewer);
             return true;
@@ -90,15 +96,11 @@ public abstract class PlayerHider implements Listener {
 
             @EventHandler(priority = EventPriority.MONITOR)
             public void onQuit(final PlayerQuitEvent e) {
-                GlobalScheduler.get(plugin).runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        playerHiddenFromPlayersMap.remove(e.getPlayer());
-                        for (Player p : ImmutableSet.copyOf(playerHiddenFromPlayersMap.keySet())) {
-                            playerHiddenFromPlayersMap.get(p).remove(e.getPlayer());
-                        }
-                    }
-                }, 1);
+                playerHiddenFromPlayersMap.remove(e.getPlayer());
+                for (Player p : ImmutableSet.copyOf(playerHiddenFromPlayersMap.keySet())) {
+                    Set<Player> hiddenFromPlayers = playerHiddenFromPlayersMap.get(p);
+                    if (hiddenFromPlayers != null) hiddenFromPlayers.remove(e.getPlayer());
+                }
             }
         }, plugin);
     }

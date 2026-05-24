@@ -3,7 +3,7 @@ package de.myzelyam.supervanish.visibility;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import de.myzelyam.supervanish.SuperVanish;
-import org.bukkit.Bukkit;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -32,7 +32,7 @@ public class PaperServerPingListener implements Listener {
                 return;
             Collection<UUID> onlineVanishedPlayers = plugin.getVanishStateMgr().getOnlineVanishedPlayers();
             int vanishedPlayersCount = onlineVanishedPlayers.size(),
-                    playerCount = Bukkit.getOnlinePlayers().size();
+                    playerCount = FoliaUtil.onlinePlayersSnapshot().size();
             if (settings.getBoolean("ExternalInvisibility.ServerList.AdjustAmountOfOnlinePlayers")) {
                 e.setNumPlayers(playerCount - vanishedPlayersCount);
             }

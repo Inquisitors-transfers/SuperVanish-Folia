@@ -12,6 +12,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.hooks.OpenInvHook;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -30,12 +31,13 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.bukkit.Material.*;
 
 public class SilentOpenChest extends Feature {
 
-    private final Map<Player, StateInfo> playerStateInfoMap = new HashMap<>();
+    private final Map<Player, StateInfo> playerStateInfoMap = new ConcurrentHashMap<>();
 
     private final Collection<Material> additionalChestMaterials;
 
@@ -76,7 +78,7 @@ public class SilentOpenChest extends Feature {
         for (Player p : playerStateInfoMap.keySet()) {
             StateInfo stateInfo = playerStateInfoMap.remove(p);
             if (stateInfo == null) continue;
-            restoreState(stateInfo, p);
+            FoliaUtil.runAtEntity(plugin, p, () -> restoreState(stateInfo, p));
         }
     }
 
@@ -186,6 +188,10 @@ public class SilentOpenChest extends Feature {
     }
 
     private void restoreState(StateInfo stateInfo, Player p) {
+        if (!FoliaUtil.isOwnedByCurrentRegion(p)) {
+            FoliaUtil.runAtEntity(plugin, p, () -> restoreState(stateInfo, p));
+            return;
+        }
         p.setGameMode(stateInfo.gameMode);
         p.teleportAsync(p.getLocation().add(0, 0.2, 0));
         EntityScheduler.get(plugin, p).run(() -> {
@@ -218,6 +224,13 @@ public class SilentOpenChest extends Feature {
 
     public boolean hasSilentlyOpenedChest(Player p) {
         return playerStateInfoMap.containsKey(p);
+    }
+
+    public boolean hasSilentlyOpenedChest(UUID uuid) {
+        for (Player p : playerStateInfoMap.keySet()) {
+            if (p.getUniqueId().equals(uuid)) return true;
+        }
+        return false;
     }
 
     @Override
