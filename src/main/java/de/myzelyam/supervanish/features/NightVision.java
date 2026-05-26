@@ -123,7 +123,6 @@ public class NightVision extends Feature implements Runnable {
             if (p.isOnline()) {
                 p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION,
                     INFINITE_POTION_EFFECT_LENGTH, 0, true, false));
-                plugin.getLogger().info("Applied night vision to " + p.getName());
             }
         };
         
