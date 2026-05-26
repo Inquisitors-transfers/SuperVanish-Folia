@@ -16,6 +16,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
+import java.util.UUID;
+
 public class Broadcast extends Feature {
 
     public Broadcast(SuperVanish plugin) {
@@ -50,10 +52,12 @@ public class Broadcast extends Feature {
 
     public static void announceSilentQuit(Player p, SuperVanish plugin) {
         if (plugin.getSettings().getBoolean("MessageOptions.AnnounceRealJoinQuitToAdmins", true)) {
+            UUID playerUuid = p.getUniqueId();
+            int playerUsePermissionLevel = plugin.getVanishPlayer(p).getUsePermissionLevel();
             FoliaUtil.forEachOnlinePlayer(plugin, onlinePlayer -> {
-                if (p == onlinePlayer)
+                if (playerUuid.equals(onlinePlayer.getUniqueId()))
                     return;
-                if (plugin.canSee(onlinePlayer, p)) {
+                if (plugin.hasPermissionToSee(onlinePlayer, playerUuid, playerUsePermissionLevel)) {
                     plugin.sendMessage(onlinePlayer, "SilentQuitMessageForAdmins", p, onlinePlayer);
                 }
             });
