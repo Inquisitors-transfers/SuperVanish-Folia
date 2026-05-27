@@ -12,7 +12,6 @@ import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.features.Broadcast;
 import de.myzelyam.supervanish.utils.FoliaUtil;
 
-import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
@@ -40,7 +39,7 @@ public class JoinListener implements EventExecutor, Listener {
                 for (Player onlinePlayer : FoliaUtil.onlinePlayersSnapshot())
                     if (plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())
                             && !plugin.hasPermissionToSee(p, onlinePlayer.getUniqueId(),
-                            plugin.getVanishPlayer(onlinePlayer).getUsePermissionLevel()))
+                            plugin.getCachedUsePermissionLevel(onlinePlayer.getUniqueId())))
                         plugin.getVisibilityChanger().getHider().setHidden(onlinePlayer, p, true);
                 // vanished:
                 if (plugin.getVanishStateMgr().isVanished(p.getUniqueId())) {
@@ -88,7 +87,7 @@ public class JoinListener implements EventExecutor, Listener {
                             plugin.getPlayerData().getBoolean("PlayerData." + p.getUniqueId() + ".dismissed."
                                     + currentVersion.replace(".", "_"), false);
                     if (!isDismissed)
-                        EntityScheduler.get(plugin, p).run(() -> plugin.sendMessage(p, "RecreationRequiredMsg", p));
+                        FoliaUtil.runAtEntity(plugin, p, () -> plugin.sendMessage(p, "RecreationRequiredMsg", p));
                 }
             }
         } catch (Exception er) {

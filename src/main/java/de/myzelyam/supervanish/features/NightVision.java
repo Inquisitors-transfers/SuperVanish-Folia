@@ -12,7 +12,6 @@ import de.myzelyam.api.vanish.PlayerHideEvent;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.utils.FoliaUtil;
-import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,7 +38,7 @@ public class NightVision extends Feature implements Runnable {
 
     @Override
     public void onEnable() {
-        GlobalScheduler.get(plugin).runTimer(this, 20 * 60 * 2, 20 * 60 * 2);
+        FoliaUtil.runGlobalTimer(plugin, this, 20 * 60 * 2, 20 * 60 * 2);
     }
 
     @Override
@@ -50,11 +49,9 @@ public class NightVision extends Feature implements Runnable {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onVanish(PlayerHideEvent e) {
         Player p = e.getPlayer();
-        // getPotionEffect(..) is 1.10+ API
-        if (plugin.getVersionUtil().isOneDotXOrHigher(10)) {
-            if (p.getPotionEffect(PotionEffectType.NIGHT_VISION) != null) {
-                playerPreviousPotionEffectMap.put(p.getUniqueId(), p.getPotionEffect(PotionEffectType.NIGHT_VISION));
-            }
+        PotionEffect currentEffect = p.getPotionEffect(PotionEffectType.NIGHT_VISION);
+        if (currentEffect != null) {
+            playerPreviousPotionEffectMap.put(p.getUniqueId(), currentEffect);
         }
         sendAddPotionEffect(p);
     }

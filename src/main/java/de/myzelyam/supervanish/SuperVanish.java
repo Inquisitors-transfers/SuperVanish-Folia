@@ -46,16 +46,6 @@ import java.util.logging.Level;
 
 public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
 
-    public static final String[] NON_REQUIRED_SETTINGS_UPDATES = {"6.0.0", "6.0.1", "6.0.2", "6.0.3",
-            "6.0.4", "6.0.5", "6.1.0", "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7",
-            "6.1.8", "6.2.0", "6.2.1", "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8",
-            "6.2.9", "6.2.10", "6.2.11", "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16", "6.2.17",
-            "6.2.18", "6.2.19", "6.2.20", "6.2.21"},
-            NON_REQUIRED_MESSAGES_UPDATES = {"6.0.0", "6.0.1", "6.0.2", "6.0.3", "6.0.4", "6.0.5", "6.1.0",
-                    "6.1.1", "6.1.2", "6.1.3", "6.1.4", "6.1.5", "6.1.6", "6.1.7", "6.1.8", "6.2.0", "6.2.1",
-                    "6.2.2", "6.2.3", "6.2.4", "6.2.5", "6.2.6", "6.2.7", "6.2.8", "6.2.9", "6.2.10", "6.2.11",
-                    "6.2.12", "6.2.13", "6.2.14", "6.2.15", "6.2.16", "6.2.17", "6.2.18", "6.2.19", "6.2.20", "6.2.21"};
-
     private boolean useProtocolLib;
     private ActionBarMgr actionBarMgr;
     private FileVanishStateMgr vanishStateMgr;
@@ -88,8 +78,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             if (getSettings().getBoolean("MiscellaneousOptions.UpdateChecker.Enable", true))
                 updateNotifier = new UpdateNotifier(this);
             visibilityChanger = new VisibilityChanger(new PreventionHider(this), this);
-            if (versionUtil.isOneDotXOrHigher(8) && useProtocolLib)
-                actionBarMgr = new ActionBarMgr(this);
+            actionBarMgr = new ActionBarMgr(this);
             if (useProtocolLib && ServerListPacketListener.isEnabled(this))
                 ServerListPacketListener.register(this);
             registerEvents();
@@ -103,7 +92,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
         }
         try {
             VanishAPI.setPlugin(this);
-        } catch (NoSuchMethodError ignored) {
+        } catch (LinkageError ignored) {
             // API already loaded by other plugin
         }
     }
@@ -116,9 +105,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
             VanishAPI.setPlugin(null);
         } catch (Throwable e) {
             if (e instanceof ThreadDeath || e instanceof VirtualMachineError) throw e;
-            if (!(e instanceof NoClassDefFoundError | e instanceof NoSuchMethodError)) {
-                e.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 
@@ -171,9 +158,7 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
         pluginManager.registerEvents(new GeneralListener(this), this);
         pluginManager.registerEvents(new PlayerBlockModifyListener(this), this);
         pluginManager.registerEvents(new WorldChangeListener(this), this);
-        if (versionUtil.isOneDotXOrHigher(10)) {
-            pluginManager.registerEvents(new TabCompleteListener(this), this);
-        }
+        pluginManager.registerEvents(new TabCompleteListener(this), this);
         pluginManager.registerEvents(loginListener = new LoginListener(this), this);
         JoinListener joinListener = new JoinListener(this);
         pluginManager.registerEvent(PlayerJoinEvent.class, joinListener,
@@ -218,6 +203,15 @@ public class SuperVanish extends JavaPlugin implements SuperVanishPlugin {
         final VanishPlayer vanishPlayer = new VanishPlayer(player, this, itemPickUps);
         VanishPlayer previous = vanishPlayers.putIfAbsent(player.getUniqueId(), vanishPlayer);
         return previous == null ? vanishPlayer : previous;
+    }
+
+    public VanishPlayer getCachedVanishPlayer(UUID playerUuid) {
+        return vanishPlayers.get(playerUuid);
+    }
+
+    public int getCachedUsePermissionLevel(UUID playerUuid) {
+        VanishPlayer vanishPlayer = getCachedVanishPlayer(playerUuid);
+        return vanishPlayer == null ? 0 : vanishPlayer.getUsePermissionLevel();
     }
 
     public void createVanishPlayer(Player player, boolean itemPickUps) {

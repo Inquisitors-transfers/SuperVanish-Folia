@@ -53,7 +53,7 @@ public class Broadcast extends Feature {
     public static void announceSilentQuit(Player p, SuperVanish plugin) {
         if (plugin.getSettings().getBoolean("MessageOptions.AnnounceRealJoinQuitToAdmins", true)) {
             UUID playerUuid = p.getUniqueId();
-            int playerUsePermissionLevel = plugin.getVanishPlayer(p).getUsePermissionLevel();
+            int playerUsePermissionLevel = plugin.getCachedUsePermissionLevel(playerUuid);
             FoliaUtil.forEachOnlinePlayer(plugin, onlinePlayer -> {
                 if (playerUuid.equals(onlinePlayer.getUniqueId()))
                     return;

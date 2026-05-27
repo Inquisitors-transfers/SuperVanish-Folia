@@ -9,6 +9,8 @@
 package de.myzelyam.supervanish.utils;
 
 import io.github.projectunified.minelib.scheduler.common.util.Platform;
+import io.github.projectunified.minelib.scheduler.common.task.Task;
+import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -17,6 +19,7 @@ import org.bukkit.plugin.Plugin;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public final class FoliaUtil {
@@ -28,6 +31,21 @@ public final class FoliaUtil {
 
     public static boolean isFolia() {
         return Platform.FOLIA.isPlatform();
+    }
+
+    public static Task runGlobal(Plugin plugin, Runnable runnable) {
+        return GlobalScheduler.get(plugin).run(runnable);
+    }
+
+    public static Task runGlobalTimer(Plugin plugin, BooleanSupplier runnable, long delayTicks, long periodTicks) {
+        return GlobalScheduler.get(plugin).runTimer(runnable, delayTicks, periodTicks);
+    }
+
+    public static Task runGlobalTimer(Plugin plugin, Runnable runnable, long delayTicks, long periodTicks) {
+        return runGlobalTimer(plugin, () -> {
+            runnable.run();
+            return true;
+        }, delayTicks, periodTicks);
     }
 
     public static boolean isOwnedByCurrentRegion(Entity entity) {

@@ -16,7 +16,6 @@ import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.commands.CommandAction;
 import de.myzelyam.supervanish.utils.FoliaUtil;
 import io.github.projectunified.minelib.scheduler.common.task.Task;
-import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -67,7 +66,7 @@ public class EssentialsHook extends PluginHook {
     @Override
     public void onPluginEnable(Plugin plugin) {
         essentials = (Essentials) plugin;
-        forcedInvisibilityTask = GlobalScheduler.get(superVanish).runTimer(forcedInvisibilityRunnable, 0, 100);
+        forcedInvisibilityTask = FoliaUtil.runGlobalTimer(superVanish, forcedInvisibilityRunnable, 0, 100);
         forcedInvisibilityRunnable.getAsBoolean();
     }
 

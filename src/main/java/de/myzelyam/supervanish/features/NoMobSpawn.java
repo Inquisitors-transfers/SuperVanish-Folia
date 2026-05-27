@@ -5,6 +5,7 @@ import com.destroystokyo.paper.event.entity.PreSpawnerSpawnEvent;
 import com.destroystokyo.paper.event.entity.SkeletonHorseTrapEvent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.utils.FoliaUtil;
+import de.myzelyam.supervanish.utils.OneTimeWarning;
 import org.bukkit.GameMode;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -14,10 +15,11 @@ import java.util.List;
 
 public class NoMobSpawn extends Feature {
 
-    private boolean suppressErrors = false;
+    private final OneTimeWarning warning;
 
     public NoMobSpawn(SuperVanish plugin) {
         super(plugin);
+        warning = new OneTimeWarning(plugin, null);
     }
 
     @EventHandler
@@ -36,10 +38,7 @@ public class NoMobSpawn extends Feature {
             if (humansCount == 0)
                 e.setCancelled(true);
         } catch (Exception er) {
-            if (!suppressErrors) {
-                plugin.logException(er);
-                suppressErrors = true;
-            }
+            warning.log(er);
         }
     }
 
@@ -49,10 +48,7 @@ public class NoMobSpawn extends Feature {
             if (plugin.getVanishStateMgr().isVanished(e.getPlayer().getUniqueId()))
                 e.setCancelled(true);
         } catch (Exception er) {
-            if (!suppressErrors) {
-                plugin.logException(er);
-                suppressErrors = true;
-            }
+            warning.log(er);
         }
     }
 
@@ -82,10 +78,7 @@ public class NoMobSpawn extends Feature {
             }
             e.setCancelled(true);
         } catch (Exception er) {
-            if (!suppressErrors) {
-                plugin.logException(er);
-                suppressErrors = true;
-            }
+            warning.log(er);
         }
     }
 

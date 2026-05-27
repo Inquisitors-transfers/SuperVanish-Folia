@@ -9,28 +9,26 @@
 package de.myzelyam.supervanish.visibility.hiders;
 
 import de.myzelyam.supervanish.SuperVanish;
-import de.myzelyam.supervanish.utils.FoliaUtil;
 import de.myzelyam.supervanish.utils.BukkitPlayerHidingUtil;
-import de.myzelyam.supervanish.visibility.hiders.modules.PlayerInfoModule;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 import de.myzelyam.supervanish.visibility.hiders.modules.TabCompleteModule;
-import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
 public class PreventionHider extends PlayerHider implements BooleanSupplier {
     public PreventionHider(SuperVanish plugin) {
         super(plugin);
         if (!BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
-            GlobalScheduler.get(plugin).runTimer(this, 2, 2);
+            FoliaUtil.runGlobalTimer(plugin, this, 2, 2);
         }
-        if (plugin.isUseProtocolLib() && plugin.getVersionUtil().isOneDotXOrHigher(8)
-                && !plugin.getVersionUtil().isOneDotXOrHigher(19)
-                && plugin.getSettings().getBoolean("InvisibilityFeatures.ModifyTablistPackets", true))
-            PlayerInfoModule.register(plugin, this);
         if (plugin.isUseProtocolLib()
                 && plugin.getSettings().getBoolean("InvisibilityFeatures.ModifyTabCompletePackets", true)
-                && !plugin.getVersionUtil().isOneDotXOrHigher(21)) {
+                && !plugin.getVersionUtil().isMinecraftAtLeast("1.21")) {
             // Not supported anymore on 1.21 and above (ProtocolLib broken)
             TabCompleteModule.register(plugin, this);
         }
@@ -56,11 +54,15 @@ public class PreventionHider extends PlayerHider implements BooleanSupplier {
 
     @Override
     public boolean getAsBoolean() {
-        for (Player hidden : playerHiddenFromPlayersMap.keySet()) {
+        for (Map.Entry<UUID, Set<UUID>> entry : playerHiddenFromPlayersMap.entrySet()) {
             if (BukkitPlayerHidingUtil.isNewPlayerHidingAPISupported(plugin)) {
                 return false;
             }
-            for (Player viewer : playerHiddenFromPlayersMap.get(hidden)) {
+            Player hidden = Bukkit.getPlayer(entry.getKey());
+            if (hidden == null) continue;
+            for (UUID viewerUuid : entry.getValue()) {
+                Player viewer = Bukkit.getPlayer(viewerUuid);
+                if (viewer == null) continue;
                 FoliaUtil.runAtEntity(plugin, viewer, () -> {
                     if (viewer.isOnline()) BukkitPlayerHidingUtil.hidePlayer(hidden, viewer, plugin);
                 });

@@ -62,7 +62,7 @@ public class LoginListener implements Listener {
             for (Player onlinePlayer : FoliaUtil.onlinePlayersSnapshot())
                 if (plugin.getVanishStateMgr().isVanished(onlinePlayer.getUniqueId())
                         && !plugin.hasPermissionToSee(p, onlinePlayer.getUniqueId(),
-                        plugin.getVanishPlayer(onlinePlayer).getUsePermissionLevel()))
+                        plugin.getCachedUsePermissionLevel(onlinePlayer.getUniqueId())))
                     plugin.getVisibilityChanger().getHider().setHidden(onlinePlayer, p, true);
         } catch (Exception er) {
             plugin.logException(er);
