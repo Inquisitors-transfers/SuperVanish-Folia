@@ -4,6 +4,7 @@ import com.lishid.openinv.IOpenInv;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.api.vanish.PostPlayerHideEvent;
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.utils.OneTimeWarning;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,12 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OpenInvHook extends PluginHook {
 
-    private boolean errorLogged = false;
+    private final OneTimeWarning warning;
 
     private final Set<UUID> alreadyHiddenBeforeVanishing = ConcurrentHashMap.newKeySet();
 
     public OpenInvHook(SuperVanish superVanish) {
         super(superVanish);
+        warning = new OneTimeWarning(superVanish, null);
     }
 
     @EventHandler
@@ -36,11 +38,8 @@ public class OpenInvHook extends PluginHook {
                 if (!p.hasPermission("sv.silentchest")) return;
                 openInv.setSilentContainerStatus(p, true);
             }
-        } catch (Exception | NoSuchMethodError | NoClassDefFoundError er) {
-            if (!errorLogged) {
-                superVanish.logException(er);
-                errorLogged = true;
-            }
+        } catch (Exception | LinkageError er) {
+            warning.log(er);
         }
     }
 
@@ -53,11 +52,8 @@ public class OpenInvHook extends PluginHook {
             if (!alreadyHiddenBeforeVanishing.remove(p.getUniqueId())) {
                 openInv.setSilentContainerStatus(p, false);
             }
-        } catch (Exception | NoSuchMethodError | NoClassDefFoundError er) {
-            if (!errorLogged) {
-                superVanish.logException(er);
-                errorLogged = true;
-            }
+        } catch (Exception | LinkageError er) {
+            warning.log(er);
         }
     }
 
@@ -75,11 +71,8 @@ public class OpenInvHook extends PluginHook {
                     openInv.setSilentContainerStatus(p, true);
                 }
             }
-        } catch (Exception | NoSuchMethodError | NoClassDefFoundError er) {
-            if (!errorLogged) {
-                superVanish.logException(er);
-                errorLogged = true;
-            }
+        } catch (Exception | LinkageError er) {
+            warning.log(er);
         }
     }
 
@@ -94,11 +87,8 @@ public class OpenInvHook extends PluginHook {
                     openInv.setSilentContainerStatus(p, false);
                 }
             }
-        } catch (Exception | NoSuchMethodError | NoClassDefFoundError er) {
-            if (!errorLogged) {
-                superVanish.logException(er);
-                errorLogged = true;
-            }
+        } catch (Exception | LinkageError er) {
+            warning.log(er);
         }
     }
 
@@ -106,11 +96,8 @@ public class OpenInvHook extends PluginHook {
         IOpenInv openInv = (IOpenInv) plugin;
         try {
             openInv.openInventory(vanished, openInv.getSpecialInventory(target, true));
-        } catch (Exception | NoSuchMethodError | NoClassDefFoundError e) {
-            if (!errorLogged) {
-                superVanish.logException(e);
-                errorLogged = true;
-            }
+        } catch (Exception | LinkageError e) {
+            warning.log(e);
             return false;
         }
         return true;

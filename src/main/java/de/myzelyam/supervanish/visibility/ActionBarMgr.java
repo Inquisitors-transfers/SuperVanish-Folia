@@ -8,20 +8,12 @@
 
 package de.myzelyam.supervanish.visibility;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import de.myzelyam.supervanish.SuperVanish;
 import de.myzelyam.supervanish.utils.FoliaUtil;
-import io.github.projectunified.minelib.scheduler.global.GlobalScheduler;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -36,7 +28,7 @@ public class ActionBarMgr {
     }
 
     private void startTask() {
-        GlobalScheduler.get(plugin).runTimer(() -> {
+        FoliaUtil.runGlobalTimer(plugin, () -> {
                 for (Player p : actionBars) {
                     FoliaUtil.runAtEntity(plugin, p, () -> {
                         if (!p.isOnline()) {
@@ -45,7 +37,7 @@ public class ActionBarMgr {
                         }
                         try {
                             sendActionBar(p, plugin.replacePlaceholders(plugin.getMessage("ActionBarMessage"), p));
-                        } catch (Exception | NoSuchMethodError | NoClassDefFoundError e) {
+                        } catch (Exception | LinkageError e) {
                             plugin.logException(e);
                             plugin.getLogger().warning("IMPORTANT: Please make sure that you are using the latest " +
                                     "dev-build of ProtocolLib and that your server is up-to-date! This error likely " +
@@ -61,26 +53,8 @@ public class ActionBarMgr {
         }, 0, 2 * 20);
     }
 
-    private void sendActionBar(Player p, String bar) throws InvocationTargetException {
-        try {
-            Class.forName("net.md_5.bungee.api.chat.ComponentBuilder");
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(bar));
-        } catch (ClassNotFoundException | NoSuchMethodError | NoClassDefFoundError er) {
-            String json = "{\"text\": \"" + ChatColor.translateAlternateColorCodes('&', bar) + "\"}";
-            WrappedChatComponent msg = WrappedChatComponent.fromJson(json);
-            PacketContainer chatMsg = new PacketContainer(PacketType.Play.Server.CHAT);
-            chatMsg.getChatComponents().write(0, msg);
-            if (plugin.getVersionUtil().isOneDotXOrHigher(12))
-                try {
-                    chatMsg.getChatTypes().write(0, EnumWrappers.ChatType.GAME_INFO);
-                } catch (NoSuchMethodError e) {
-                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText
-                            ("SuperVanish: Please update ProtocolLib"));
-                }
-            else
-                chatMsg.getBytes().write(0, (byte) 2);
-            ProtocolLibrary.getProtocolManager().sendServerPacket(p, chatMsg);
-        }
+    private void sendActionBar(Player p, String bar) {
+        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(bar));
     }
 
     public void addActionBar(Player p) {

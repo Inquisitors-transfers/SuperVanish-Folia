@@ -11,8 +11,8 @@ package de.myzelyam.supervanish.features;
 import de.myzelyam.api.vanish.PlayerHideEvent;
 import de.myzelyam.api.vanish.PlayerShowEvent;
 import de.myzelyam.supervanish.SuperVanish;
+import de.myzelyam.supervanish.utils.FoliaUtil;
 
-import io.github.projectunified.minelib.scheduler.entity.EntityScheduler;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -36,11 +36,8 @@ public class NoPush extends Feature {
         if (team == null) {
             team = p.getScoreboard().registerNewTeam("Vanished");
         }
-        try {
-            team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-            team.addEntry(p.getName());
-        } catch (NoSuchMethodError | NoClassDefFoundError ignored) {
-        }
+        team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+        team.addEntry(p.getName());
     }
 
     public void setCanPush(Player p) {
@@ -62,7 +59,7 @@ public class NoPush extends Feature {
     @EventHandler
     public void onJoin(final PlayerJoinEvent e) {
         if (plugin.getVanishStateMgr().isVanished(e.getPlayer().getUniqueId())) {
-            EntityScheduler.get(plugin, e.getPlayer()).runLater(() -> setCantPush(e.getPlayer()), 5);
+            FoliaUtil.runAtEntityLater(plugin, e.getPlayer(), () -> setCantPush(e.getPlayer()), 5);
         }
     }
 

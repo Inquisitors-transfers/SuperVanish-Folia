@@ -50,10 +50,7 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                         }
                         return null;
                     } catch (Throwable t) {
-                        if (!(t instanceof NoClassDefFoundError || t instanceof
-                                ConcurrentModificationException))
-                            superVanish.logException(t);
-                        return no;
+                        return handlePlaceholderFailure(t, no);
                     }
                 });
         PlaceholderAPI.registerPlaceholder(superVanish, "supervanish_vanishprefix",
@@ -68,10 +65,7 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                         }
                         return null;
                     } catch (Throwable t) {
-                        if (!(t instanceof NoClassDefFoundError || t instanceof
-                                ConcurrentModificationException))
-                            superVanish.logException(t);
-                        return "";
+                        return handlePlaceholderFailure(t, "");
                     }
                 });
         PlaceholderAPI.registerPlaceholder(superVanish, "supervanish_vanishsuffix",
@@ -86,10 +80,7 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                         }
                         return null;
                     } catch (Throwable t) {
-                        if (!(t instanceof NoClassDefFoundError || t instanceof
-                                ConcurrentModificationException))
-                            superVanish.logException(t);
-                        return "";
+                        return handlePlaceholderFailure(t, "");
                     }
                 });
         PlaceholderAPI.registerPlaceholder(superVanish, "supervanish_vanishedplayers",
@@ -113,10 +104,7 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                                 ? playerListMessage.substring(0, playerListMessage.length() - 2)
                                 : playerListMessage;
                     } catch (Throwable t) {
-                        if (!(t instanceof NoClassDefFoundError || t instanceof
-                                ConcurrentModificationException))
-                            superVanish.logException(t);
-                        return "";
+                        return handlePlaceholderFailure(t, "");
                     }
                 });
         PlaceholderAPI.registerPlaceholder(superVanish, "supervanish_playercount",
@@ -132,11 +120,15 @@ public class MVdWPlaceholderAPIHook extends PluginHook {
                         }
                         return playercount + "";
                     } catch (Throwable t) {
-                        if (!(t instanceof NoClassDefFoundError || t instanceof
-                                ConcurrentModificationException))
-                            superVanish.logException(t);
-                        return FoliaUtil.onlinePlayersSnapshot().size() + "";
+                        return handlePlaceholderFailure(t, FoliaUtil.onlinePlayersSnapshot().size() + "");
                     }
                 });
+    }
+
+    private String handlePlaceholderFailure(Throwable throwable, String fallback) {
+        if (!(throwable instanceof LinkageError || throwable instanceof ConcurrentModificationException)) {
+            superVanish.logException(throwable);
+        }
+        return fallback;
     }
 }
