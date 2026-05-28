@@ -14,10 +14,6 @@ https://discord.gg/aT9z7q7hX8
 
 mvn clean install
 
-# Description
-
-Allows server admins to be completely invisible and undetectable for other players, which helps them with their administrative work.Pull request are welcome.
-
 # Folia inquisitors
 [<img src="https://github.com/Folia-Inquisitors.png" width=80 alt="Folia-Inquisitors">](https://github.com/orgs/Folia-Inquisitors/repositories)
 [<img src="https://github.com/KaspianDev.png" width=80 alt="KaspianDe">](https://github.com/KaspianDev)
