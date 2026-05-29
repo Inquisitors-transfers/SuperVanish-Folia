@@ -3,8 +3,8 @@
 
 # Disclaimer
 
-We are moving away from using this fork, and to our own fork with more version stabiliy, quicker updates, and modernized code. (   ) 
-This plugin will remain open until it breaks. Expect this to be the last update
+We are moving away from using this fork, and to our own fork with more version stabiliy, quicker updates, and modernized code. ( https://github.com/Folia-Inquisitors/StealthVanish ) 
+This fork will remain open until it breaks. Expect this to be the last update
 
 # Unofficial Discord
 
