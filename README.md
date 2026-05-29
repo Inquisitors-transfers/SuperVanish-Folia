@@ -3,8 +3,11 @@
 
 # Disclaimer
 
-We are moving away from using this fork, and to our own fork with more version stabiliy, quicker updates, and modernized code. ( https://github.com/Folia-Inquisitors/StealthVanish ) 
-This fork will remain open until it breaks. Expect this to be the last update
+We are moving away from this fork and transitioning to our own version, focused on long-term version stability, faster updates, improved compatibility, and modernized code.
+
+New repository: https://github.com/Folia-Inquisitors/StealthVanish
+
+This fork will remain available, but it will no longer receive active updates. 
 
 # Unofficial Discord
 
